@@ -81,7 +81,6 @@ class AMIClient(object):
 
     def connect(self):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.settimeout(self._timeout)
         self._socket.connect((self._address, self._port))
         self.finished = threading.Event()
         self._thread = threading.Thread(target=self.listen)
@@ -303,6 +302,7 @@ class AutoReconnect(threading.Thread):
                 return True
             self.on_disconnect(self._ami_client, response)
         except Exception as ex:
+            self._ami_client.disconnect()  # If we get an exception here, we need to disconnect to allow it to reconnect.
             self.on_disconnect(self._ami_client, ex)
         return False
 
