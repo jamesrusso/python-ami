@@ -81,7 +81,9 @@ class AMIClient(object):
 
     def connect(self):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.settimeout(self._timeout)
         self._socket.connect((self._address, self._port))
+        self._socket.settimeout(None)
         self.finished = threading.Event()
         self._thread = threading.Thread(target=self.listen)
         self._thread.daemon = True
@@ -112,10 +114,13 @@ class AMIClient(object):
             listener.on_unknown(source=self, **kwargs)
 
     def disconnect(self):
-        self.finished.set()
+        if self.finished:
+            self.finished.set()
         try:
-            self._socket.close()
-            self._thread.join(self._timeout)
+            if self._socket:
+                self._socket.close()
+            if self._thread:
+                self._thread.join(self._timeout)
         except:
             pass
 
